@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Michelle Wellness">
+    <meta name="theme-color" content="#FAF8F5">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-180.png">
+    <title>Michelle's Wellness & Fasting Tracker</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for Trends -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        cream: {
+                            50: '#FDFCFB',
+                            100: '#FAF8F5',
+                            200: '#F3EFEA',
+                            300: '#E6DFD6',
+                        },
+                        sage: {
+                            50: '#F2F6F3',
+                            100: '#E1ECE4',
+                            200: '#C4D9CA',
+                            500: '#5C836B',
+                            600: '#496B56',
+                            700: '#3A5545',
+                        },
+                        terracotta: {
+                            50: '#FDF5F3',
+                            100: '#FAE7E2',
+                            400: '#DC856E',
+                            500: '#C96D55',
+                            600: '#B05740',
+                        },
+                        ink: {
+                            900: '#1F2421',
+                            700: '#3D4641',
+                            500: '#68736D',
+                            400: '#949E98',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+        }
+
+        body {
+            background-color: #EFECE6;
+            color: #1F2421;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+        }
+
+        .app-shell {
+            max-width: 430px;
+            min-height: 100dvh;
+            margin: 0 auto;
+            background-color: #FAF8F5;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(31, 36, 33, 0.12);
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 450px) {
+            body {
+                background-color: #FAF8F5;
+            }
+            .app-shell {
+                max-width: 100%;
+                box-shadow: none;
+            }
+        }
+
+        .safe-top {
+            padding-top: max(14px, var(--sat));
+        }
+
+        .safe-bottom {
+            padding-bottom: max(12px, var(--sab));
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        input[type="time"] {
+            -webkit-appearance: none;
+            appearance: none;
+            min-height: 44px;
+        }
+
+        @keyframes softPulse {
+            0%, 100% { box-shadow: 0 8px 24px rgba(201, 109, 85, 0.38); transform: scale(1); }
+            50% { box-shadow: 0 10px 30px rgba(201, 109, 85, 0.58); transform: scale(1.03); }
+        }
+        .fab-dirty {
+            animation: softPulse 2.2s infinite ease-in-out;
+        }
+
+        .callout-badge {
+            transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .callout-badge:active {
+            transform: scale(0.95);
+        }
+
+        .water-bottle-btn {
+            transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .water-bottle-btn:active {
+            transform: scale(0.88);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-sage-200 selection:text-ink-900">
+
+    <div class="app-shell">
+        <!-- TOP HEADER -->
+        <header class="sticky top-0 z-30 bg-cream-100/90 backdrop-blur-md border-b border-cream-300/80 safe-top px-4 pb-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-sage-600 text-white flex items-center justify-center shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="font-display font-bold text-base leading-tight text-ink-900">Michelle's Rhythm</h1>
+                        <div class="flex items-center gap-1.5 text-[11px] font-medium text-ink-500">
+                            <span id="sync-dot" class="w-2 h-2 rounded-full bg-sage-500 inline-block"></span>
+                            <span id="sync-status-text">Synced · Google Sheet</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Apps Script Sync Config & PWA Install Hint Button -->
+                <div class="flex items-center gap-1.5">
+                    <button onclick="openInstallHelp()" title="Add to iPhone Home Screen" class="p-2.5 rounded-xl bg-cream-200/80 text-ink-700 hover:bg-cream-300 transition active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                    </button>
+                    <button onclick="openSettingsModal()" title="Apps Script Sync Settings" class="p-2.5 rounded-xl bg-cream-200/80 text-ink-700 hover:bg-cream-300 transition active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT AREA (Scrollable) -->
+        <main id="main-scroll" class="flex-1 overflow-y-auto px-4 pt-3 pb-36 space-y-4">
+
+            <!-- TAB 1: LOG (DAILY TRACKING) -->
+            <section id="view-log" class="space-y-4">
+                <!-- < Date > Stepper Bar -->
+                <div class="bg-white rounded-2xl p-2 shadow-sm border border-cream-300/70 flex items-center justify-between">
+                    <button onclick="stepLogDate(-1)" class="w-11 h-11 rounded-xl bg-cream-100 hover:bg-cream-200 active:scale-95 flex items-center justify-center text-ink-700 transition" aria-label="Previous Day">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+
+                    <div class="text-center">
+                        <div id="log-date-label" class="font-display font-bold text-base text-ink-900">Tue, Nov 11, 2026</div>
+                        <div id="log-date-sub" class="text-xs font-medium text-sage-600">Sheet Row · 11/11/2026</div>
+                    </div>
+
+                    <button onclick="stepLogDate(1)" class="w-11 h-11 rounded-xl bg-cream-100 hover:bg-cream-200 active:scale-95 flex items-center justify-center text-ink-700 transition" aria-label="Next Day">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Card 1: Fasting & Eating Window -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-cream-300/70 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-sage-500"></span>
+                            <h2 class="font-display font-bold text-sm uppercase tracking-wider text-ink-700">Fasting & Eating Window</h2>
+                        </div>
+                        <span id="fasting-goal-badge" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-sage-50 text-sage-700 border border-sage-200">
+                            Goal: 16:8
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-cream-100 rounded-2xl p-3 border border-cream-300/60">
+                            <label for="input-first-bite" class="block text-[11px] font-semibold uppercase tracking-wide text-ink-500 mb-1">First Bite</label>
+                            <input id="input-first-bite" type="time" onchange="onLogFieldChange()" class="w-full bg-white rounded-xl px-3 py-2 text-base font-bold text-ink-900 border border-cream-300 focus:outline-none focus:border-sage-500">
+                        </div>
+
+                        <div class="bg-cream-100 rounded-2xl p-3 border border-cream-300/60">
+                            <label for="input-last-bite" class="block text-[11px] font-semibold uppercase tracking-wide text-ink-500 mb-1">Last Bite</label>
+                            <input id="input-last-bite" type="time" onchange="onLogFieldChange()" class="w-full bg-white rounded-xl px-3 py-2 text-base font-bold text-ink-900 border border-cream-300 focus:outline-none focus:border-sage-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div class="rounded-2xl bg-sage-50 border border-sage-200/80 p-3 flex items-center justify-between">
+                            <div>
+                                <div class="text-[11px] font-semibold text-sage-700">Fasting Hours</div>
+                                <div class="text-[10px] text-sage-600/80" id="fasting-calc-note">Since prev Last Bite</div>
+                            </div>
+                            <div id="display-fasting-hours" class="font-display font-extrabold text-xl text-sage-700">13.0h</div>
+                        </div>
+
+                        <div class="rounded-2xl bg-terracotta-50 border border-terracotta-100 p-3 flex items-center justify-between">
+                            <div>
+                                <div class="text-[11px] font-semibold text-terracotta-600">Eating Hours</div>
+                                <div class="text-[10px] text-terracotta-500/80">First → Last Bite</div>
+                            </div>
+                            <div id="display-eating-hours" class="font-display font-extrabold text-xl text-terracotta-600">11.0h</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Hydration & Qualitative Meal Log -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-cream-300/70 space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                                <h2 class="font-display font-bold text-sm uppercase tracking-wider text-ink-700">Water Intake</h2>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span id="water-bottles-count" class="text-[11px] font-semibold text-ink-500">8 bottles</span>
+                                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+                                    <span id="display-water">64</span> / <span id="display-water-goal">80</span> oz
+                                </span>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-ink-400 mb-3">Tap any bottle to fill or empty (8 oz each)</p>
+
+                        <div id="water-bottles-grid" class="grid grid-cols-5 gap-2.5"></div>
+
+                        <div class="flex items-center justify-between mt-3 pt-2 border-t border-cream-200/80">
+                            <span class="text-[11px] font-medium text-ink-500">Each bottle = <strong>8 oz</strong></span>
+                            <button type="button" onclick="addExtraWaterBottle()" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200/80 active:scale-95 transition flex items-center gap-1">
+                                <span>+ Add Bottle</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr class="border-cream-200">
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="input-meals" class="font-display font-bold text-sm uppercase tracking-wider text-ink-700 flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-terracotta-500"></span>
+                                Meal Log
+                            </label>
+                            <span class="text-[11px] font-medium text-ink-400">Food notes only · No numbers</span>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5 mb-2">
+                            <button type="button" onclick="appendMealTag('• Breakfast: ')" class="text-xs font-medium px-2.5 py-1 rounded-lg bg-cream-100 hover:bg-cream-200 text-ink-700 border border-cream-300/70 transition">+ Breakfast</button>
+                            <button type="button" onclick="appendMealTag('• Lunch: ')" class="text-xs font-medium px-2.5 py-1 rounded-lg bg-cream-100 hover:bg-cream-200 text-ink-700 border border-cream-300/70 transition">+ Lunch</button>
+                            <button type="button" onclick="appendMealTag('• Dinner: ')" class="text-xs font-medium px-2.5 py-1 rounded-lg bg-cream-100 hover:bg-cream-200 text-ink-700 border border-cream-300/70 transition">+ Dinner</button>
+                            <button type="button" onclick="appendMealTag('• Snack: ')" class="text-xs font-medium px-2.5 py-1 rounded-lg bg-cream-100 hover:bg-cream-200 text-ink-700 border border-cream-300/70 transition">+ Snack</button>
+                        </div>
+
+                        <textarea id="input-meals" rows="3" oninput="autoResizeTextarea(this); onLogFieldChange();" placeholder="What did you eat today? (e.g., Greek yogurt with berries, grilled chicken & roasted sweet potatoes...)" class="w-full rounded-2xl bg-cream-100 border border-cream-300/80 p-3 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:bg-white focus:border-sage-500 transition resize-none overflow-y-auto max-h-[220px]"></textarea>
+                    </div>
+                </div>
+
+                <!-- Card 3: Energy, Mood, Movement & Notes -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-cream-300/70 space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-display font-bold text-sm uppercase tracking-wider text-ink-700">Energy Level</span>
+                            <span id="energy-label-text" class="text-xs font-semibold text-sage-700">5 / 5 · High & Steady</span>
+                        </div>
+                        <div id="energy-pills" class="grid grid-cols-5 gap-2"></div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-display font-bold text-sm uppercase tracking-wider text-ink-700">Mood</span>
+                            <span id="mood-label-text" class="text-xs font-semibold text-terracotta-600">5 / 5 · Great</span>
+                        </div>
+                        <div id="mood-pills" class="grid grid-cols-5 gap-2"></div>
+                    </div>
+
+                    <hr class="border-cream-200">
+
+                    <div class="space-y-2.5">
+                        <span class="font-display font-bold text-sm uppercase tracking-wider text-ink-700 block">Movement & Exercise</span>
+                        <div class="grid grid-cols-3 gap-2.5 items-start">
+                            <div class="col-span-2">
+                                <label for="input-exercise-desc" class="sr-only">Exercise Description</label>
+                                <textarea id="input-exercise-desc" rows="1" oninput="autoResizeTextarea(this); onLogFieldChange();" placeholder="e.g., Strength + incline walk" class="w-full rounded-xl bg-cream-100 border border-cream-300/80 px-3 py-2.5 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:bg-white focus:border-sage-500 transition resize-none overflow-y-auto max-h-[220px]"></textarea>
+                            </div>
+                            <div class="relative">
+                                <label for="input-exercise-dur" class="sr-only">Duration (min)</label>
+                                <input id="input-exercise-dur" type="number" min="0" max="600" oninput="onLogFieldChange()" placeholder="0" class="w-full rounded-xl bg-cream-100 border border-cream-300/80 pl-3 pr-9 py-2.5 text-sm font-bold text-ink-900 focus:outline-none focus:bg-white focus:border-sage-500">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-ink-400">min</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="input-notes" class="font-display font-bold text-sm uppercase tracking-wider text-ink-700 block mb-1.5">Other / Notes</label>
+                        <textarea id="input-notes" rows="2" oninput="autoResizeTextarea(this); onLogFieldChange();" placeholder="Sleep quality, cycle notes, hunger cues, wins..." class="w-full rounded-2xl bg-cream-100 border border-cream-300/80 p-3 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:bg-white focus:border-sage-500 transition resize-none overflow-y-auto max-h-[220px]"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: MEASUREMENTS (PERIODIC BODY TRACKING) -->
+            <section id="view-measurements" class="hidden space-y-4">
+                <div class="bg-white rounded-2xl p-2 shadow-sm border border-cream-300/70 flex items-center justify-between gap-1">
+                    <button onclick="stepMeasurementEntry(-1)" class="w-11 h-11 rounded-xl bg-cream-100 hover:bg-cream-200 active:scale-95 flex items-center justify-center text-ink-700 transition" aria-label="Previous Measurement">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+
+                    <div class="text-center flex-1">
+                        <div id="meas-date-label" class="font-display font-bold text-base text-ink-900">Nov 11, 2026</div>
+                        <div id="meas-compare-label" class="text-[11px] font-medium text-ink-500">Comparing vs Nov 1, 2026</div>
+                    </div>
+
+                    <button onclick="stepMeasurementEntry(1)" class="w-11 h-11 rounded-xl bg-cream-100 hover:bg-cream-200 active:scale-95 flex items-center justify-center text-ink-700 transition" aria-label="Next Measurement">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+
+                    <button onclick="createNewMeasurementEntry()" class="px-3 h-11 rounded-xl bg-sage-600 text-white font-semibold text-xs hover:bg-sage-700 active:scale-95 transition flex items-center gap-1 shadow-sm">
+                        <span>+ New</span>
+                    </button>
+                </div>
+
+                <!-- Interactive SVG Body Map -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-cream-300/70 relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h2 class="font-display font-bold text-sm uppercase tracking-wider text-ink-700">Body Map & Deltas</h2>
+                            <p class="text-[11px] text-ink-500">Tap any callout to edit · Green = reduced</p>
+                        </div>
+
+                        <button onclick="focusMeasurementInput('weight')" class="text-right bg-cream-100 hover:bg-cream-200 border border-cream-300 rounded-2xl px-3 py-1.5 transition">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Weight</div>
+                            <div class="flex items-baseline justify-end gap-1.5">
+                                <span id="diag-weight-val" class="font-display font-extrabold text-lg text-ink-900">138.4</span>
+                                <span class="text-xs font-semibold text-ink-500">lb</span>
+                                <span id="diag-weight-delta" class="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700">−1.2</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="relative w-full h-[360px] flex items-center justify-center select-none my-1">
+                        <svg viewBox="0 0 260 360" class="w-full h-full max-w-[340px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <ellipse cx="130" cy="185" rx="74" ry="155" fill="#FAF8F5" />
+                            <circle cx="130" cy="34" r="18" fill="#E6DFD6" stroke="#C7BEB2" stroke-width="1.5"/>
+                            <path d="M122 51 L122 64 L138 64 L138 51" fill="#E6DFD6"/>
+                            <path d="M98 68 C108 63, 152 63, 162 68 L178 134 C179 139, 172 142, 168 137 L157 96 L154 134 C152 146, 150 156, 152 168 C156 184, 163 196, 161 214 L154 328 C153 334, 143 334, 142 328 L133 224 L127 224 L118 328 C117 334, 107 334, 106 328 L99 214 C97 196, 104 184, 108 168 C110 156, 108 146, 106 134 L103 96 L92 137 C88 142, 81 139, 82 134 Z"
+                                  fill="#EFECE6" stroke="#B8AFA3" stroke-width="1.8" stroke-linejoin="round"/>
+
+                            <ellipse id="zone-rBicep" cx="95" cy="104" rx="8" ry="4" transform="rotate(15 95 104)" stroke="#5C836B" stroke-width="2" fill="rgba(92,131,107,0.18)"/>
+                            <line x1="87" y1="104" x2="54" y2="92" stroke="#949E98" stroke-width="1.2" stroke-dasharray="2 2"/>
+
+                            <ellipse id="zone-lBicep" cx="165" cy="104" rx="8" ry="4" transform="rotate(-15 165 104)" stroke="#5C836B" stroke-width="2" fill="rgba(92,131,107,0.18)"/>
+                            <line x1="173" y1="104" x2="206" y2="92" stroke="#949E98" stroke-width="1.2" stroke-dasharray="2 2"/>
+
+                            <path id="zone-bust" d="M107 108 Q130 115 153 108" stroke="#5C836B" stroke-width="2.5" stroke-linecap="round"/>
+                            <line x1="107" y1="108" x2="54" y2="146" stroke="#949E98" stroke-width="1.2" stroke-dasharray="2 2"/>
+
+                            <path id="zone-waist" d="M110 148 Q130 154 150 148" stroke="#5C836B" stroke-width="2.8" stroke-linecap="round"/>
+                            <line x1="150" y1="148" x2="206" y2="148" stroke="#949E98" stroke-width="1.2" stroke-dasharray="2 2"/>
+
+                            <path id="zone-hip" d="M101 192 Q130 200 159 192" stroke="#5C836B" stroke-width="2.8" stroke-linecap="round"/>
+                            <line x1="101" y1="192" x2="54" y2="208" stroke="#949E98" stroke-width="1.2" stroke-dasharray="2 2"/>
+
+                            <ellipse id="zone-rThigh" cx="114" cy="242" rx="11" ry="4.5" stroke="#5C836B" stroke-width="2.2" fill="rgba(92,131,107,0.18)"/>
+                            <line x1="103" y1="242" x2="54" y2="274" stroke="#949E98" stroke-width="1.2" stroke-dasharray="2 2"/>
+
+                            <ellipse id="zone-lThigh" cx="146" cy="242" rx="11" ry="4.5" stroke="#5C836B" stroke-width="2.2" fill="rgba(92,131,107,0.18)"/>
+                            <line x1="157" y1="242" x2="206" y2="274" stroke="#949E98" stroke-width="1.2" stroke-dasharray="2 2"/>
+                        </svg>
+
+                        <button onclick="focusMeasurementInput('rBicep')" id="badge-rBicep" class="callout-badge absolute left-0 top-[56px] bg-cream-50 border border-cream-300 rounded-xl px-2.5 py-1.5 text-left shadow-sm">
+                            <div class="text-[10px] font-bold text-ink-500">R Bicep</div>
+                            <div class="flex items-center gap-1">
+                                <span class="font-display font-bold text-xs text-ink-900" data-val>11.2"</span>
+                                <span class="text-[10px] font-bold px-1 rounded" data-delta>−0.1</span>
+                            </div>
+                        </button>
+
+                        <button onclick="focusMeasurementInput('bust')" id="badge-bust" class="callout-badge absolute left-0 top-[122px] bg-cream-50 border border-cream-300 rounded-xl px-2.5 py-1.5 text-left shadow-sm">
+                            <div class="text-[10px] font-bold text-ink-500">Bust</div>
+                            <div class="flex items-center gap-1">
+                                <span class="font-display font-bold text-xs text-ink-900" data-val>34.5"</span>
+                                <span class="text-[10px] font-bold px-1 rounded" data-delta>0.0</span>
+                            </div>
+                        </button>
+
+                        <button onclick="focusMeasurementInput('hip')" id="badge-hip" class="callout-badge absolute left-0 top-[190px] bg-cream-50 border border-cream-300 rounded-xl px-2.5 py-1.5 text-left shadow-sm">
+                            <div class="text-[10px] font-bold text-ink-500">Hip</div>
+                            <div class="flex items-center gap-1">
+                                <span class="font-display font-bold text-xs text-ink-900" data-val>38.0"</span>
+                                <span class="text-[10px] font-bold px-1 rounded" data-delta>−0.5</span>
+                            </div>
+                        </button>
+
+                        <button onclick="focusMeasurementInput('rThigh')" id="badge-rThigh" class="callout-badge absolute left-0 top-[258px] bg-cream-50 border border-cream-300 rounded-xl px-2.5 py-1.5 text-left shadow-sm">
+                            <div class="text-[10px] font-bold text-ink-500">R Thigh</div>
+                            <div class="flex items-center gap-1">
+                                <span class="font-display font-bold text-xs text-ink-900" data-val>21.5"</span>
+                                <span class="text-[10px] font-bold px-1 rounded" data-delta>−0.2</span>
+                            </div>
+                        </button>
+
+                        <button onclick="focusMeasurementInput('lBicep')" id="badge-lBicep" class="callout-badge absolute right-0 top-[56px] bg-cream-50 border border-cream-300 rounded-xl px-2.5 py-1.5 text-right shadow-sm">
+                            <div class="text-[10px] font-bold text-ink-500">L Bicep</div>
+                            <div class="flex items-center justify-end gap-1">
+                                <span class="font-display font-bold text-xs text-ink-900" data-val>11.1"</span>
+                                <span class="text-[10px] font-bold px-1 rounded" data-delta>−0.1</span>
+                            </div>
+                        </button>
+
+                        <button onclick="focusMeasurementInput('waist')" id="badge-waist" class="callout-badge absolute right-0 top-[128px] bg-cream-50 border border-cream-300 rounded-xl px-2.5 py-1.5 text-right shadow-sm">
+                            <div class="text-[10px] font-bold text-ink-500">Waist</div>
+                            <div class="flex items-center justify-end gap-1">
+                                <span class="font-display font-bold text-xs text-ink-900" data-val>27.2"</span>
+                                <span class="text-[10px] font-bold px-1 rounded" data-delta>−0.6</span>
+                            </div>
+                        </button>
+
+                        <button onclick="focusMeasurementInput('lThigh')" id="badge-lThigh" class="callout-badge absolute right-0 top-[258px] bg-cream-50 border border-cream-300 rounded-xl px-2.5 py-1.5 text-right shadow-sm">
+                            <div class="text-[10px] font-bold text-ink-500">L Thigh</div>
+                            <div class="flex items-center justify-end gap-1">
+                                <span class="font-display font-bold text-xs text-ink-900" data-val>21.4"</span>
+                                <span class="text-[10px] font-bold px-1 rounded" data-delta>−0.3</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Editable Measurement Inputs Grid -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-cream-300/70 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-display font-bold text-sm uppercase tracking-wider text-ink-700">Edit Check-In Values</h3>
+                        <span class="text-[11px] font-medium text-ink-400">Inches & lbs</span>
+                    </div>
+
+                    <div id="measurement-inputs-grid" class="grid grid-cols-2 gap-2.5"></div>
+                </div>
+            </section>
+
+            <!-- TAB 3: INSIGHTS (ACTIONABLE DATA & TRENDS) -->
+            <section id="view-insights" class="hidden space-y-4">
+                <div class="bg-gradient-to-br from-sage-700 to-sage-600 rounded-3xl p-5 text-white shadow-md relative overflow-hidden">
+                    <div class="flex items-start justify-between relative z-10">
+                        <div>
+                            <div class="text-xs font-semibold uppercase tracking-wider text-sage-100">Active Fasting Streak</div>
+                            <div class="flex items-baseline gap-2 mt-1">
+                                <span id="streak-count" class="font-display font-extrabold text-4xl">14</span>
+                                <span class="text-sm font-semibold text-sage-100">days consistent</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl p-1 flex text-xs font-bold">
+                            <button onclick="setFastingProtocol(14)" id="proto-14" class="px-2 py-1 rounded-lg transition">14:10</button>
+                            <button onclick="setFastingProtocol(16)" id="proto-16" class="px-2 py-1 rounded-lg bg-white text-sage-700 shadow-sm transition">16:8</button>
+                            <button onclick="setFastingProtocol(18)" id="proto-18" class="px-2 py-1 rounded-lg transition">18:6</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 relative z-10">
+                        <div class="flex justify-between text-xs font-semibold mb-1.5">
+                            <span class="text-sage-100">30-Day Window Adherence</span>
+                            <span id="adherence-pct-label">86% (26/30 days)</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-black/20 rounded-full overflow-hidden">
+                            <div id="adherence-bar" class="h-full bg-amber-300 rounded-full transition-all duration-500" style="width: 86%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trend Charts Card -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-cream-300/70 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h2 class="font-display font-bold text-sm uppercase tracking-wider text-ink-700">Smoothed Trends</h2>
+                            <p class="text-[11px] text-ink-500">Auto-averaged to filter daily water shifts</p>
+                        </div>
+
+                        <div class="bg-cream-100 p-1 rounded-xl border border-cream-300/80 flex text-[11px] font-bold">
+                            <button onclick="setChartSmoothing('raw')" id="smooth-raw" class="px-2.5 py-1 rounded-lg text-ink-500 transition">Raw</button>
+                            <button onclick="setChartSmoothing('weekly')" id="smooth-weekly" class="px-2.5 py-1 rounded-lg bg-white text-ink-900 shadow-sm transition">7d Avg</button>
+                            <button onclick="setChartSmoothing('biweekly')" id="smooth-biweekly" class="px-2.5 py-1 rounded-lg text-ink-500 transition">14d Avg</button>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-1.5">
+                        <button onclick="setChartMetric('weight')" id="metric-btn-weight" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-sage-600 text-white transition">Weight (lb)</button>
+                        <button onclick="setChartMetric('waist')" id="metric-btn-waist" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-cream-100 text-ink-700 transition">Waist (in)</button>
+                        <button onclick="setChartMetric('fasting')" id="metric-btn-fasting" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-cream-100 text-ink-700 transition">Fasting (hrs)</button>
+                    </div>
+
+                    <div class="h-52 w-full pt-1">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Actionable AI Insights Panel -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-cream-300/70 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-xl bg-terracotta-50 text-terracotta-600 flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2 class="font-display font-bold text-sm uppercase tracking-wider text-ink-700">Actionable Insights</h2>
+                                <p class="text-[11px] text-ink-500">Patterns from your energy, hydration & timing</p>
+                            </div>
+                        </div>
+
+                        <button onclick="refreshAiInsights()" id="btn-refresh-ai" class="px-3 py-1.5 rounded-xl bg-terracotta-50 hover:bg-terracotta-100 text-terracotta-600 text-xs font-bold transition active:scale-95">
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div id="ai-insights-list" class="space-y-2.5"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- STICKY FLOATING ACTION BUTTON (FAB) TO LOCK IN EDITS -->
+        <button id="save-fab" onclick="commitSaveToSheet()" class="fixed bottom-[86px] right-4 sm:right-[calc(50%-198px)] z-40 flex items-center gap-2 px-5 py-3.5 rounded-full bg-sage-600 text-white font-display font-bold text-sm shadow-lg transition-all duration-200 active:scale-95">
+            <svg id="fab-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span id="fab-text">Locked In</span>
+        </button>
+
+        <!-- BOTTOM NAVIGATION BAR -->
+        <nav class="sticky bottom-0 z-30 bg-white/95 backdrop-blur-md border-t border-cream-300/90 safe-bottom px-6 pt-2">
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="switchTab('log')" id="nav-log" class="flex flex-col items-center justify-center py-1.5 rounded-2xl text-sage-700 bg-sage-50 font-bold transition">
+                    <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="text-[11px]">Log</span>
+                </button>
+
+                <button onclick="switchTab('measurements')" id="nav-measurements" class="flex flex-col items-center justify-center py-1.5 rounded-2xl text-ink-500 hover:text-ink-900 font-semibold transition">
+                    <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                    </svg>
+                    <span class="text-[11px]">Measurements</span>
+                </button>
+
+                <button onclick="switchTab('insights')" id="nav-insights" class="flex flex-col items-center justify-center py-1.5 rounded-2xl text-ink-500 hover:text-ink-900 font-semibold transition">
+                    <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
+                    </svg>
+                    <span class="text-[11px]">Insights</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- TOAST MESSAGE BOX -->
+        <div id="toast-banner" class="pointer-events-none fixed top-16 left-1/2 -translate-x-1/2 z-50 opacity-0 transition-all duration-300 translate-y-[-8px]">
+            <div id="toast-content" class="bg-ink-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 whitespace-nowrap">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span id="toast-text">Saved to Google Sheet</span>
+            </div>
+        </div>
+
+        <!-- SETTINGS MODAL -->
+        <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-ink-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-4">
+            <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-display font-bold text-lg text-ink-900">Google Sheets Sync</h3>
+                    <button onclick="closeModal('settings-modal')" class="p-2 rounded-xl bg-cream-100 text-ink-500">✕</button>
+                </div>
+
+                <p class="text-xs text-ink-500 leading-relaxed">
+                    Paste your deployed <strong>Google Apps Script Web App URL</strong> below to sync directly with <em>Michelle Fasting Spreadsheet</em> (<code class="bg-cream-100 px-1 rounded">Log</code>, <code class="bg-cream-100 px-1 rounded">Measurements</code>, <code class="bg-cream-100 px-1 rounded">Insights</code>).
+                </p>
+
+                <div>
+                    <label class="block text-xs font-bold text-ink-700 mb-1">Apps Script Web App URL</label>
+                    <input id="input-script-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full rounded-xl bg-cream-100 border border-cream-300 px-3 py-2.5 text-xs text-ink-900 focus:outline-none focus:border-sage-500">
+                </div>
+
+                <div class="bg-sage-50 border border-sage-200 rounded-2xl p-3 flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-bold text-sage-800">Daily 8:30 PM Discord Nudge</div>
+                        <div class="text-[11px] text-sage-700">Triggers if Last Bite or Water is blank</div>
+                    </div>
+                    <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-sage-600 text-white">Active</span>
+                </div>
+
+                <div class="flex gap-2 pt-1">
+                    <button onclick="saveEndpointConfig()" class="flex-1 py-3 rounded-xl bg-sage-600 text-white font-bold text-sm hover:bg-sage-700 transition">Save Endpoint</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- iOS ADD TO HOME SCREEN MODAL -->
+        <div id="install-modal" class="hidden fixed inset-0 z-50 bg-ink-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-4">
+            <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-display font-bold text-lg text-ink-900">Install on iPhone</h3>
+                    <button onclick="closeModal('install-modal')" class="p-2 rounded-xl bg-cream-100 text-ink-500">✕</button>
+                </div>
+                <ol class="text-xs text-ink-700 space-y-2.5 list-decimal list-inside leading-relaxed">
+                    <li>Open this GitHub Pages URL in <strong>Safari</strong> on Michelle's iPhone.</li>
+                    <li>Tap the <strong>Share</strong> icon (<span class="inline-block px-1.5 py-0.5 bg-cream-100 rounded font-bold">↑</span>) at the bottom of Safari.</li>
+                    <li>Scroll down and select <strong>Add to Home Screen</strong>.</li>
+                    <li>Ensure <strong>Open as Web App</strong> is enabled and tap <strong>Add</strong>.</li>
+                </ol>
+                <button onclick="closeModal('install-modal')" class="w-full py-3 rounded-xl bg-ink-900 text-white font-bold text-sm mt-2">Got It</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'michelle_wellness_pwa_v1';
+        const DEFAULT_SCRIPT_URL = '';
+
+        const defaultState = {
+            scriptUrl: DEFAULT_SCRIPT_URL,
+            fastingTargetHours: 16,
+            activeTab: 'log',
+            currentLogIndex: 0,
+            currentMeasIndex: 1,
+            chartMetric: 'weight',
+            chartSmoothing: 'weekly',
+            logs: [
+                {
+                    date: '2026-11-11',
+                    displayDate: 'Wed, Nov 11, 2026',
+                    sheetDate: '11/11/26',
+                    firstBite: '09:00',
+                    lastBite: '20:00',
+                    fastingHours: 13.0,
+                    eatingHours: 11.0,
+                    waterOz: 64,
+                    waterBottleSlots: [true, true, true, true, true, true, true, true, false, false],
+                    meals: '• Breakfast: Greek yogurt with berries & chia\n• Lunch: Grilled chicken salad with avocado\n• Dinner: Salmon, roasted sweet potatoes & broccoli',
+                    energy: 5,
+                    mood: 5,
+                    exerciseDesc: 'Strength training + brisk walk',
+                    exerciseDur: 90,
+                    notes: 'Felt super steady all afternoon. Great sleep.'
+                },
+                {
+                    date: '2026-11-12',
+                    displayDate: 'Thu, Nov 12, 2026',
+                    sheetDate: '11/12/26',
+                    firstBite: '11:30',
+                    lastBite: '19:30',
+                    fastingHours: 15.5,
+                    eatingHours: 8.0,
+                    waterOz: 72,
+                    waterBottleSlots: [true, true, true, true, true, true, true, true, true, false],
+                    meals: '• Lunch: Turkey lettuce wraps & hummus\n• Snack: Apple slices with almond butter\n• Dinner: Stir-fry veggies with shrimp & jasmine rice',
+                    energy: 4,
+                    mood: 5,
+                    exerciseDesc: 'Mobility & core flow',
+                    exerciseDur: 35,
+                    notes: 'Easy 15.5h fast—black coffee & sparkling water carried me to 11:30.'
+                },
+                {
+                    date: '2026-11-13',
+                    displayDate: 'Fri, Nov 13, 2026',
+                    sheetDate: '11/13/26',
+                    firstBite: '12:00',
+                    lastBite: '19:45',
+                    fastingHours: 16.5,
+                    eatingHours: 7.8,
+                    waterOz: 80,
+                    waterBottleSlots: [true, true, true, true, true, true, true, true, true, true],
+                    meals: '• Lunch: Eggs, sourdough toast & sautéed spinach\n• Dinner: Taco bowl with black beans, salsa & guacamole',
+                    energy: 5,
+                    mood: 4,
+                    exerciseDesc: 'Lower body lift',
+                    exerciseDur: 55,
+                    notes: 'Hit 16.5h fast cleanly! Zero afternoon slump.'
+                },
+                {
+                    date: '2026-11-14',
+                    displayDate: 'Sat, Nov 14, 2026',
+                    sheetDate: '11/14/26',
+                    firstBite: '11:45',
+                    lastBite: '',
+                    fastingHours: 16.0,
+                    eatingHours: null,
+                    waterOz: 40,
+                    waterBottleSlots: [true, true, true, true, true, false, false, false, false, false],
+                    meals: '• Lunch: Smoothie bowl with hemp seeds & banana',
+                    energy: 4,
+                    mood: 5,
+                    exerciseDesc: 'Outdoor walk',
+                    exerciseDur: 45,
+                    notes: ''
+                }
+            ],
+            measurements: [
+                {
+                    date: '2026-11-01',
+                    displayDate: 'Nov 1, 2026',
+                    weight: 139.6,
+                    rBicep: 11.3,
+                    lBicep: 11.2,
+                    bust: 34.5,
+                    waist: 27.8,
+                    hip: 38.5,
+                    rThigh: 21.7,
+                    lThigh: 21.7
+                },
+                {
+                    date: '2026-11-11',
+                    displayDate: 'Nov 11, 2026',
+                    weight: 138.4,
+                    rBicep: 11.2,
+                    lBicep: 11.1,
+                    bust: 34.5,
+                    waist: 27.2,
+                    hip: 38.0,
+                    rThigh: 21.5,
+                    lThigh: 21.4
+                }
+            ],
+            trendSeries: [
+                { label: 'Oct 28', weight: 140.2, waist: 28.0, fasting: 14.5 },
+                { label: 'Oct 30', weight: 139.9, waist: 27.9, fasting: 15.0 },
+                { label: 'Nov 1',  weight: 139.6, waist: 27.8, fasting: 16.0 },
+                { label: 'Nov 3',  weight: 139.8, waist: 27.7, fasting: 15.5 },
+                { label: 'Nov 5',  weight: 139.1, waist: 27.6, fasting: 16.5 },
+                { label: 'Nov 7',  weight: 138.9, waist: 27.5, fasting: 16.0 },
+                { label: 'Nov 9',  weight: 138.7, waist: 27.3, fasting: 16.2 },
+                { label: 'Nov 11', weight: 138.4, waist: 27.2, fasting: 13.0 },
+                { label: 'Nov 12', weight: 138.5, waist: 27.2, fasting: 15.5 },
+                { label: 'Nov 13', weight: 138.1, waist: 27.1, fasting: 16.5 }
+            ],
+            aiInsightsSets: [
+                [
+                    {
+                        tag: 'Energy & Timing',
+                        color: 'sage',
+                        title: '15.5h+ fasts correlate with your highest energy days',
+                        body: 'On days you opened your eating window around 11:30 AM–12:00 PM with protein-rich meals, your afternoon energy averaged 4.7/5 with zero slump notes.'
+                    },
+                    {
+                        tag: 'Hydration Habit',
+                        color: 'sky',
+                        title: '64+ oz water days align with smoother waist trends',
+                        body: 'Your 7-day smoothed waist measurement dropped 0.6" during stretches where you hit at least 64 oz of water before dinner.'
+                    },
+                    {
+                        tag: 'Actionable Next Step',
+                        color: 'terracotta',
+                        title: 'Anchor Last Bite by 7:45 PM on workout days',
+                        body: 'Closing dinner by 7:45 PM naturally sets up a stress-free 16-hour overnight window before an 11:45 AM first bite tomorrow.'
+                    }
+                ],
+                [
+                    {
+                        tag: 'Consistency Win',
+                        color: 'sage',
+                        title: 'Your 7-day smoothed weight trend is steadily downward',
+                        body: 'Filtering out normal daily water fluctuations shows a clean −1.2 lb shift over the past two weeks alongside consistent movement.'
+                    },
+                    {
+                        tag: 'Meal Pattern',
+                        color: 'terracotta',
+                        title: 'Savory first meals keep mood & focus steady',
+                        body: 'Days starting with eggs, Greek yogurt, or lean protein & healthy fats consistently scored 5/5 on mood without evening snack cravings.'
+                    },
+                    {
+                        tag: 'Actionable Next Step',
+                        color: 'sky',
+                        title: 'Front-load 24 oz of water during morning fasting hours',
+                        body: 'Drinking three 8 oz glasses before your first bite makes reaching 16 hours feel effortless and supports workout recovery.'
+                    }
+                ]
+            ],
+            aiInsightIndex: 0
+        };
+
+        let appState = loadState();
+        let isDirty = false;
+        let trendChartInstance = null;
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    return {
+                        ...defaultState,
+                        ...parsed,
+                        scriptUrl: parsed.scriptUrl || DEFAULT_SCRIPT_URL
+                    };
+                }
+            } catch (e) {
+                console.warn('LocalStorage unavailable, using in-memory state');
+            }
+            return JSON.parse(JSON.stringify(defaultState));
+        }
+
+        function persistLocally() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.warn('Could not write to localStorage');
+            }
+        }
+
+        function switchTab(tabName) {
+            appState.activeTab = tabName;
+            ['log', 'measurements', 'insights'].forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const nav = document.getElementById(`nav-${t}`);
+                if (t === tabName) {
+                    view.classList.remove('hidden');
+                    nav.classList.add('text-sage-700', 'bg-sage-50', 'font-bold');
+                    nav.classList.remove('text-ink-500', 'font-semibold');
+                } else {
+                    view.classList.add('hidden');
+                    nav.classList.remove('text-sage-700', 'bg-sage-50', 'font-bold');
+                    nav.classList.add('text-ink-500', 'font-semibold');
+                }
+            });
+
+            const fab = document.getElementById('save-fab');
+            if (tabName === 'insights') {
+                fab.classList.add('opacity-0', 'pointer-events-none');
+                renderInsightsTab();
+            } else {
+                fab.classList.remove('opacity-0', 'pointer-events-none');
+            }
+
+            document.getElementById('main-scroll').scrollTop = 0;
+        }
+
+        const RATING_LABELS = {
+            energy: {
+                1: '1 / 5 · Very Low',
+                2: '2 / 5 · Sluggish',
+                3: '3 / 5 · Moderate',
+                4: '4 / 5 · Good',
+                5: '5 / 5 · High & Steady'
+            },
+            mood: {
+                1: '1 / 5 · Stressed / Low',
+                2: '2 / 5 · Meh',
+                3: '3 / 5 · Calm / Okay',
+                4: '4 / 5 · Good',
+                5: '5 / 5 · Great'
+            }
+        };
+
+        function getRatingIconSvg(type, level, isSelected) {
+            if (type === 'energy') {
+                const color = isSelected ? '#496B56' : '#B4BEB8';
+                const fillPct = level * 20;
+                const fillWidth = Math.round((fillPct / 100) * 14);
+                return `
+                    <svg viewBox="0 0 28 18" class="w-9 h-6 overflow-visible">
+                        <rect x="2" y="3" width="20" height="12" rx="3" fill="${isSelected ? '#E1ECE4' : '#F3EFEA'}" stroke="${color}" stroke-width="2"/>
+                        <rect x="23" y="6.5" width="3" height="5" rx="1.2" fill="${color}"/>
+                        <rect x="5" y="6" width="${fillWidth}" height="6" rx="1.5" fill="${color}"/>
+                    </svg>
+                `;
+            } else {
+                const color = isSelected ? '#C96D55' : '#B4BEB8';
+                const bg = isSelected ? '#FDF5F3' : '#F3EFEA';
+                const mouths = {
+                    1: `<path d="M9 17.5 Q13 13.5 17 17.5" stroke="${color}" stroke-width="2" stroke-linecap="round" fill="none"/>`,
+                    2: `<path d="M9.5 16.5 Q13 14.5 16.5 16.5" stroke="${color}" stroke-width="2" stroke-linecap="round" fill="none"/>`,
+                    3: `<line x1="9.5" y1="15.5" x2="16.5" y2="15.5" stroke="${color}" stroke-width="2" stroke-linecap="round"/>`,
+                    4: `<path d="M9.5 14.5 Q13 18 16.5 14.5" stroke="${color}" stroke-width="2" stroke-linecap="round" fill="none"/>`,
+                    5: `<path d="M9 14 Q13 19.5 17 14 Z" fill="${color}"/>`
+                };
+                return `
+                    <svg viewBox="0 0 26 26" class="w-8 h-8 overflow-visible">
+                        <circle cx="13" cy="13" r="10.5" fill="${bg}" stroke="${color}" stroke-width="2"/>
+                        <circle cx="9.8" cy="10.2" r="1.3" fill="${color}"/>
+                        <circle cx="16.2" cy="10.2" r="1.3" fill="${color}"/>
+                        ${mouths[level] || mouths[3]}
+                    </svg>
+                `;
+            }
+        }
+
+        function renderRatingPills(type, selectedVal) {
+            const container = document.getElementById(`${type}-pills`);
+            container.innerHTML = [1, 2, 3, 4, 5].map(num => {
+                const isSelected = Number(selectedVal) === num;
+                const labelColor = isSelected
+                    ? (type === 'energy' ? 'text-sage-700 font-extrabold' : 'text-terracotta-600 font-extrabold')
+                    : 'text-ink-400 font-semibold';
+                return `
+                    <button type="button" onclick="selectRating('${type}', ${num})"
+                        class="py-1.5 flex flex-col items-center justify-center gap-1 transition active:scale-90 ${isSelected ? 'scale-110' : 'opacity-75 hover:opacity-100'}">
+                        ${getRatingIconSvg(type, num, isSelected)}
+                        <span class="text-[11px] ${labelColor}">${num}</span>
+                    </button>
+                `;
+            }).join('');
+
+            document.getElementById(`${type}-label-text`).textContent = RATING_LABELS[type][selectedVal] || '';
+        }
+
+        function selectRating(type, val) {
+            const entry = appState.logs[appState.currentLogIndex];
+            entry[type] = val;
+            renderRatingPills(type, val);
+            markDirty();
+        }
+
+        function ensureBottleSlots(entry) {
+            const needed = Math.max(10, Math.ceil((entry.waterOz || 0) / 8));
+            if (!Array.isArray(entry.waterBottleSlots) || entry.waterBottleSlots.length < needed) {
+                const filledCount = Math.round((entry.waterOz || 0) / 8);
+                entry.waterBottleSlots = Array.from({ length: needed }, (_, idx) => idx < filledCount);
+            }
+            return entry.waterBottleSlots;
+        }
+
+        function renderWaterBottles(waterOz) {
+            const entry = appState.logs[appState.currentLogIndex];
+            const slots = ensureBottleSlots(entry);
+            const filledCount = slots.filter(Boolean).length;
+            const totalOz = filledCount * 8;
+            entry.waterOz = totalOz;
+
+            document.getElementById('display-water').textContent = totalOz;
+            document.getElementById('display-water-goal').textContent = slots.length * 8;
+            document.getElementById('water-bottles-count').textContent = `${filledCount} ${filledCount === 1 ? 'bottle' : 'bottles'}`;
+
+            const grid = document.getElementById('water-bottles-grid');
+            grid.innerHTML = slots.map((isFilled, i) => {
+                const bodyColor = isFilled ? '#0EA5E9' : '#E2E8F0';
+                const capColor = isFilled ? '#0369A1' : '#CBD5E1';
+                const bandColor = isFilled ? '#38BDF8' : '#F1F5F9';
+
+                return `
+                    <button type="button" onclick="toggleWaterBottle(${i})"
+                        aria-label="Bottle ${i + 1}: 8 oz (${isFilled ? 'filled' : 'empty'})"
+                        class="water-bottle-btn group py-1.5 flex flex-col items-center justify-center transition">
+                        <svg viewBox="0 0 36 56" class="w-9 h-14 overflow-visible">
+                            <rect x="13" y="3" width="10" height="5" rx="1.5" fill="${capColor}"/>
+                            <rect x="14.5" y="8" width="7" height="4" fill="${bodyColor}"/>
+                            <path d="M14.5 12 L9.5 18 L9.5 50 C9.5 51.7 10.8 53 12.5 53 L23.5 53 C25.2 53 26.5 51.7 26.5 50 L26.5 18 L21.5 12 Z"
+                                  fill="${bodyColor}"/>
+                            <rect x="9.5" y="27" width="17" height="11" fill="${bandColor}"/>
+                        </svg>
+                        <span class="text-[10px] font-bold mt-1 ${isFilled ? 'text-sky-700' : 'text-ink-400'}">
+                            8 oz
+                        </span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function toggleWaterBottle(index) {
+            const entry = appState.logs[appState.currentLogIndex];
+            const slots = ensureBottleSlots(entry);
+            slots[index] = !slots[index];
+            entry.waterOz = slots.filter(Boolean).length * 8;
+            renderWaterBottles(entry.waterOz);
+            markDirty();
+        }
+
+        function addExtraWaterBottle() {
+            const entry = appState.logs[appState.currentLogIndex];
+            const slots = ensureBottleSlots(entry);
+            slots.push(true);
+            entry.waterOz = slots.filter(Boolean).length * 8;
+            renderWaterBottles(entry.waterOz);
+            markDirty();
+        }
+
+        function parseTimeToMinutes(timeStr) {
+            if (!timeStr || !timeStr.includes(':')) return null;
+            const [h, m] = timeStr.split(':').map(Number);
+            if (isNaN(h) || isNaN(m)) return null;
+            return h * 60 + m;
+        }
+
+        function calculateWindows(index) {
+            const curr = appState.logs[index];
+            const prev = index > 0 ? appState.logs[index - 1] : null;
+
+            const firstMin = parseTimeToMinutes(curr.firstBite);
+            const lastMin = parseTimeToMinutes(curr.lastBite);
+
+            let eatingHours = null;
+            if (firstMin !== null && lastMin !== null) {
+                let diff = lastMin - firstMin;
+                if (diff < 0) diff += 24 * 60;
+                eatingHours = +(diff / 60).toFixed(1);
+            }
+
+            let fastingHours = null;
+            let note = 'Since prev Last Bite';
+            if (prev && prev.lastBite && firstMin !== null) {
+                const prevLastMin = parseTimeToMinutes(prev.lastBite);
+                if (prevLastMin !== null) {
+                    const overnightDiff = (24 * 60 - prevLastMin) + firstMin;
+                    fastingHours = +(overnightDiff / 60).toFixed(1);
+                }
+            } else if (eatingHours !== null) {
+                fastingHours = +(24 - eatingHours).toFixed(1);
+                note = '24h − Eating Window';
+            }
+
+            curr.eatingHours = eatingHours;
+            curr.fastingHours = fastingHours;
+            return { eatingHours, fastingHours, note };
+        }
+
+        function autoResizeTextarea(el) {
+            if (!el) return;
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 220) + 'px';
+        }
+
+        function resizeAllLogTextareas() {
+            ['input-meals', 'input-exercise-desc', 'input-notes'].forEach(id => {
+                autoResizeTextarea(document.getElementById(id));
+            });
+        }
+
+        function renderLogTab() {
+            const entry = appState.logs[appState.currentLogIndex];
+            document.getElementById('log-date-label').textContent = entry.displayDate;
+            document.getElementById('log-date-sub').textContent = `Sheet Row · ${entry.sheetDate}`;
+            document.getElementById('fasting-goal-badge').textContent = `Goal: ${appState.fastingTargetHours}:${24 - appState.fastingTargetHours}`;
+
+            document.getElementById('input-first-bite').value = entry.firstBite || '';
+            document.getElementById('input-last-bite').value = entry.lastBite || '';
+            renderWaterBottles(entry.waterOz || 0);
+            document.getElementById('input-meals').value = entry.meals || '';
+            document.getElementById('input-exercise-desc').value = entry.exerciseDesc || '';
+            document.getElementById('input-exercise-dur').value = entry.exerciseDur || '';
+            document.getElementById('input-notes').value = entry.notes || '';
+
+            renderRatingPills('energy', entry.energy || 4);
+            renderRatingPills('mood', entry.mood || 4);
+            updateWindowBadges();
+            resizeAllLogTextareas();
+        }
+
+        function updateWindowBadges() {
+            const { eatingHours, fastingHours, note } = calculateWindows(appState.currentLogIndex);
+            document.getElementById('display-fasting-hours').textContent = fastingHours !== null ? `${fastingHours.toFixed(1)}h` : '—';
+            document.getElementById('display-eating-hours').textContent = eatingHours !== null ? `${eatingHours.toFixed(1)}h` : '—';
+            document.getElementById('fasting-calc-note').textContent = note;
+        }
+
+        function onLogFieldChange() {
+            const entry = appState.logs[appState.currentLogIndex];
+            entry.firstBite = document.getElementById('input-first-bite').value;
+            entry.lastBite = document.getElementById('input-last-bite').value;
+            entry.meals = document.getElementById('input-meals').value;
+            entry.exerciseDesc = document.getElementById('input-exercise-desc').value;
+            entry.exerciseDur = Number(document.getElementById('input-exercise-dur').value) || 0;
+            entry.notes = document.getElementById('input-notes').value;
+
+            updateWindowBadges();
+            markDirty();
+        }
+
+        function appendMealTag(prefix) {
+            const box = document.getElementById('input-meals');
+            const current = box.value.trim();
+            box.value = current ? `${current}\n${prefix}` : prefix;
+            box.focus();
+            autoResizeTextarea(box);
+            onLogFieldChange();
+        }
+
+        function stepLogDate(dir) {
+            const nextIdx = appState.currentLogIndex + dir;
+            if (nextIdx >= 0 && nextIdx < appState.logs.length) {
+                appState.currentLogIndex = nextIdx;
+                renderLogTab();
+            } else if (dir === 1) {
+                const last = appState.logs[appState.logs.length - 1];
+                const dt = new Date(last.date + 'T12:00:00');
+                dt.setDate(dt.getDate() + 1);
+                const iso = dt.toISOString().slice(0, 10);
+                const shortStr = `${dt.getMonth() + 1}/${dt.getDate()}/${String(dt.getFullYear()).slice(-2)}`;
+                const disp = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                appState.logs.push({
+                    date: iso,
+                    displayDate: disp,
+                    sheetDate: shortStr,
+                    firstBite: '',
+                    lastBite: '',
+                    fastingHours: null,
+                    eatingHours: null,
+                    waterOz: 0,
+                    waterBottleSlots: Array(10).fill(false),
+                    meals: '',
+                    energy: 4,
+                    mood: 4,
+                    exerciseDesc: '',
+                    exerciseDur: 0,
+                    notes: ''
+                });
+                appState.currentLogIndex = appState.logs.length - 1;
+                renderLogTab();
+                showToast(`Created row for ${shortStr}`);
+            } else {
+                showToast('Earliest log date reached');
+            }
+        }
+
+        const MEAS_FIELDS = [
+            { key: 'weight', label: 'Weight', unit: 'lb', step: '0.1' },
+            { key: 'waist',  label: 'Waist',  unit: 'in', step: '0.1' },
+            { key: 'hip',    label: 'Hip',    unit: 'in', step: '0.1' },
+            { key: 'bust',   label: 'Bust',   unit: 'in', step: '0.1' },
+            { key: 'rBicep', label: 'R Bicep', unit: 'in', step: '0.1' },
+            { key: 'lBicep', label: 'L Bicep', unit: 'in', step: '0.1' },
+            { key: 'rThigh', label: 'R Thigh', unit: 'in', step: '0.1' },
+            { key: 'lThigh', label: 'L Thigh', unit: 'in', step: '0.1' }
+        ];
+
+        function formatDelta(val) {
+            if (val === 0 || isNaN(val)) return '0.0';
+            return val > 0 ? `+${val.toFixed(1)}` : `−${Math.abs(val).toFixed(1)}`;
+        }
+
+        function renderMeasurementsTab() {
+            const idx = appState.currentMeasIndex;
+            const curr = appState.measurements[idx];
+            const prev = idx > 0 ? appState.measurements[idx - 1] : curr;
+
+            document.getElementById('meas-date-label').textContent = curr.displayDate;
+            document.getElementById('meas-compare-label').textContent =
+                idx > 0 ? `Comparing vs ${prev.displayDate}` : 'Baseline Check-In';
+
+            const wDelta = +(curr.weight - prev.weight).toFixed(1);
+            document.getElementById('diag-weight-val').textContent = curr.weight.toFixed(1);
+            const wBadge = document.getElementById('diag-weight-delta');
+            wBadge.textContent = formatDelta(wDelta);
+            wBadge.className = `text-[11px] font-bold px-1.5 py-0.5 rounded-md ${
+                wDelta < 0 ? 'bg-emerald-100 text-emerald-700' : wDelta > 0 ? 'bg-amber-100 text-amber-800' : 'bg-cream-200 text-ink-500'
+            }`;
+
+            ['rBicep', 'lBicep', 'bust', 'waist', 'hip', 'rThigh', 'lThigh'].forEach(key => {
+                const val = Number(curr[key]) || 0;
+                const delta = +(val - (Number(prev[key]) || 0)).toFixed(1);
+                const badge = document.getElementById(`badge-${key}`);
+                const zone = document.getElementById(`zone-${key}`);
+
+                if (badge) {
+                    badge.querySelector('[data-val]').textContent = `${val.toFixed(1)}"`;
+                    const deltaEl = badge.querySelector('[data-delta]');
+                    deltaEl.textContent = formatDelta(delta);
+
+                    if (delta < 0) {
+                        badge.classList.remove('border-cream-300', 'border-amber-300');
+                        badge.classList.add('border-emerald-400', 'bg-emerald-50/70');
+                        deltaEl.className = 'text-[10px] font-bold px-1 rounded bg-emerald-100 text-emerald-700';
+                        if (zone) zone.setAttribute('stroke', '#10B981');
+                    } else if (delta > 0) {
+                        badge.classList.remove('border-cream-300', 'border-emerald-400', 'bg-emerald-50/70');
+                        badge.classList.add('border-amber-300');
+                        deltaEl.className = 'text-[10px] font-bold px-1 rounded bg-amber-100 text-amber-800';
+                        if (zone) zone.setAttribute('stroke', '#D97706');
+                    } else {
+                        badge.classList.remove('border-emerald-400', 'border-amber-300', 'bg-emerald-50/70');
+                        badge.classList.add('border-cream-300');
+                        deltaEl.className = 'text-[10px] font-bold px-1 rounded bg-cream-200 text-ink-500';
+                        if (zone) zone.setAttribute('stroke', '#5C836B');
+                    }
+                }
+            });
+
+            const grid = document.getElementById('measurement-inputs-grid');
+            grid.innerHTML = MEAS_FIELDS.map(f => `
+                <div class="bg-cream-100 rounded-2xl p-2.5 border border-cream-300/70 flex items-center justify-between">
+                    <label for="meas-in-${f.key}" class="text-xs font-bold text-ink-700">${f.label}</label>
+                    <div class="flex items-center gap-1">
+                        <input id="meas-in-${f.key}" type="number" step="${f.step}" value="${curr[f.key]}"
+                            oninput="updateMeasurementField('${f.key}', this.value)"
+                            class="w-16 text-right bg-white rounded-lg px-2 py-1 text-sm font-bold text-ink-900 border border-cream-300 focus:outline-none focus:border-sage-500">
+                        <span class="text-[11px] font-semibold text-ink-400 w-4">${f.unit}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateMeasurementField(key, rawVal) {
+            const curr = appState.measurements[appState.currentMeasIndex];
+            curr[key] = parseFloat(rawVal) || 0;
+            renderMeasurementsTab();
+            const el = document.getElementById(`meas-in-${key}`);
+            if (el) el.focus();
+            markDirty();
+        }
+
+        function focusMeasurementInput(key) {
+            const el = document.getElementById(`meas-in-${key}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                    el.focus();
+                    el.select();
+                }, 220);
+            }
+        }
+
+        function stepMeasurementEntry(dir) {
+            const next = appState.currentMeasIndex + dir;
+            if (next >= 0 && next < appState.measurements.length) {
+                appState.currentMeasIndex = next;
+                renderMeasurementsTab();
+            } else {
+                showToast(dir < 0 ? 'Oldest check-in reached' : 'Latest check-in reached');
+            }
+        }
+
+        function createNewMeasurementEntry() {
+            const latest = appState.measurements[appState.measurements.length - 1];
+            const today = new Date();
+            const iso = today.toISOString().slice(0, 10);
+            const disp = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            appState.measurements.push({
+                ...latest,
+                date: iso,
+                displayDate: disp
+            });
+            appState.currentMeasIndex = appState.measurements.length - 1;
+            renderMeasurementsTab();
+            markDirty();
+            showToast(`Started new check-in for ${disp}`);
+        }
+
+        function setFastingProtocol(hours) {
+            appState.fastingTargetHours = hours;
+            [14, 16, 18].forEach(h => {
+                const btn = document.getElementById(`proto-${h}`);
+                if (h === hours) {
+                    btn.classList.add('bg-white', 'text-sage-700', 'shadow-sm');
+                } else {
+                    btn.classList.remove('bg-white', 'text-sage-700', 'shadow-sm');
+                }
+            });
+
+            const stats = {
+                14: { streak: 22, pct: 93, days: '28/30' },
+                16: { streak: 14, pct: 86, days: '26/30' },
+                18: { streak: 5,  pct: 63, days: '19/30' }
+            }[hours];
+
+            document.getElementById('streak-count').textContent = stats.streak;
+            document.getElementById('adherence-pct-label').textContent = `${stats.pct}% (${stats.days} days)`;
+            document.getElementById('adherence-bar').style.width = `${stats.pct}%`;
+        }
+
+        function computeMovingAverage(arr, windowSize) {
+            if (windowSize <= 1) return arr;
+            return arr.map((_, idx) => {
+                const start = Math.max(0, idx - windowSize + 1);
+                const slice = arr.slice(start, idx + 1);
+                const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
+                return +avg.toFixed(2);
+            });
+        }
+
+        function setChartSmoothing(mode) {
+            appState.chartSmoothing = mode;
+            ['raw', 'weekly', 'biweekly'].forEach(m => {
+                const btn = document.getElementById(`smooth-${m}`);
+                if (m === mode) {
+                    btn.classList.add('bg-white', 'text-ink-900', 'shadow-sm');
+                    btn.classList.remove('text-ink-500');
+                } else {
+                    btn.classList.remove('bg-white', 'text-ink-900', 'shadow-sm');
+                    btn.classList.add('text-ink-500');
+                }
+            });
+            renderTrendChart();
+        }
+
+        function setChartMetric(metric) {
+            appState.chartMetric = metric;
+            ['weight', 'waist', 'fasting'].forEach(m => {
+                const btn = document.getElementById(`metric-btn-${m}`);
+                if (m === metric) {
+                    btn.classList.add('bg-sage-600', 'text-white');
+                    btn.classList.remove('bg-cream-100', 'text-ink-700');
+                } else {
+                    btn.classList.remove('bg-sage-600', 'text-white');
+                    btn.classList.add('bg-cream-100', 'text-ink-700');
+                }
+            });
+            renderTrendChart();
+        }
+
+        function renderTrendChart() {
+            const ctx = document.getElementById('trendChart');
+            if (!ctx) return;
+
+            const labels = appState.trendSeries.map(d => d.label);
+            const rawData = appState.trendSeries.map(d => d[appState.chartMetric]);
+            const winSize = appState.chartSmoothing === 'weekly' ? 4 : appState.chartSmoothing === 'biweekly' ? 7 : 1;
+            const smoothedData = computeMovingAverage(rawData, winSize);
+
+            const colorMap = {
+                weight: { line: '#496B56', fill: 'rgba(92, 131, 107, 0.14)' },
+                waist:  { line: '#C96D55', fill: 'rgba(201, 109, 85, 0.14)' },
+                fasting:{ line: '#0284C7', fill: 'rgba(2, 132, 199, 0.14)' }
+            }[appState.chartMetric];
+
+            if (trendChartInstance) {
+                trendChartInstance.destroy();
+            }
+
+            trendChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Smoothed Trend',
+                            data: smoothedData,
+                            borderColor: colorMap.line,
+                            backgroundColor: colorMap.fill,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.38,
+                            pointRadius: 3.5,
+                            pointBackgroundColor: colorMap.line
+                        },
+                        ...(appState.chartSmoothing !== 'raw' ? [{
+                            label: 'Daily Raw',
+                            data: rawData,
+                            borderColor: 'rgba(148, 158, 152, 0.45)',
+                            borderWidth: 1.5,
+                            borderDash: [4, 4],
+                            fill: false,
+                            tension: 0.2,
+                            pointRadius: 2
+                        }] : [])
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1F2421',
+                            padding: 10,
+                            cornerRadius: 10
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: '600' }, color: '#68736D' }
+                        },
+                        y: {
+                            grid: { color: '#F3EFEA' },
+                            ticks: { font: { size: 10, weight: '600' }, color: '#68736D' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderInsightsTab() {
+            setFastingProtocol(appState.fastingTargetHours);
+            renderTrendChart();
+            renderAiInsightsList();
+        }
+
+        function renderAiInsightsList() {
+            const container = document.getElementById('ai-insights-list');
+            const items = appState.aiInsightsSets[appState.aiInsightIndex] || [];
+
+            const tagStyles = {
+                sage: 'bg-sage-50 text-sage-700 border-sage-200',
+                terracotta: 'bg-terracotta-50 text-terracotta-600 border-terracotta-100',
+                sky: 'bg-sky-50 text-sky-700 border-sky-200'
+            };
+
+            container.innerHTML = items.map(item => `
+                <div class="rounded-2xl bg-cream-100/80 border border-cream-300/70 p-3.5 space-y-1.5">
+                    <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${tagStyles[item.color] || tagStyles.sage}">
+                        ${item.tag}
+                    </span>
+                    <h3 class="font-display font-bold text-sm text-ink-900 leading-snug">${item.title}</h3>
+                    <p class="text-xs text-ink-700 leading-relaxed">${item.body}</p>
+                </div>
+            `).join('');
+        }
+
+        async function refreshAiInsights() {
+            const btn = document.getElementById('btn-refresh-ai');
+            btn.disabled = true;
+            btn.textContent = 'Analyzing...';
+
+            if (appState.scriptUrl) {
+                try {
+                    const res = await fetch(`${appState.scriptUrl}?action=getInsights`);
+                    const data = await res.json();
+                    if (data.status === 'ok' && Array.isArray(data.insights) && data.insights.length > 0) {
+                        appState.aiInsightsSets = [data.insights];
+                        appState.aiInsightIndex = 0;
+                        persistLocally();
+                        renderAiInsightsList();
+                        btn.disabled = false;
+                        btn.textContent = 'Refresh';
+                        showToast('Fresh Gemini AI insights cached to Sheet!');
+                        return;
+                    } else if (data.message) {
+                        throw new Error(data.message);
+                    }
+                } catch (err) {
+                    console.warn('Live AI insights error:', err);
+                    showToast('AI error: ' + err.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Refresh';
+                    return;
+                }
+            }
+
+            setTimeout(() => {
+                appState.aiInsightIndex = (appState.aiInsightIndex + 1) % appState.aiInsightsSets.length;
+                renderAiInsightsList();
+                btn.disabled = false;
+                btn.textContent = 'Refresh';
+                showToast('Updated AI trend observations (Demo)');
+            }, 450);
+        }
+
+        function setSyncIndicator(state, label) {
+            const dot = document.getElementById('sync-dot');
+            const text = document.getElementById('sync-status-text');
+            if (!dot || !text) return;
+
+            dot.className = 'w-2 h-2 rounded-full inline-block';
+            if (state === 'syncing') {
+                dot.classList.add('bg-amber-400', 'animate-pulse');
+            } else if (state === 'error') {
+                dot.classList.add('bg-red-500');
+            } else {
+                dot.classList.add('bg-sage-500');
+            }
+            text.textContent = label;
+        }
+
+        function rebuildTrendSeriesFromLogs() {
+            const recentLogs = appState.logs.filter(l => l.firstBite || l.waterOz > 0 || l.fastingHours).slice(-14);
+            if (recentLogs.length < 2) return;
+
+            const measByDate = {};
+            appState.measurements.forEach(m => { measByDate[m.date] = m; });
+
+            let lastWeight = appState.measurements.length ? appState.measurements[appState.measurements.length - 1].weight : 138.4;
+            let lastWaist = appState.measurements.length ? appState.measurements[appState.measurements.length - 1].waist : 27.2;
+
+            appState.trendSeries = recentLogs.map((l) => {
+                if (measByDate[l.date]) {
+                    if (measByDate[l.date].weight) lastWeight = measByDate[l.date].weight;
+                    if (measByDate[l.date].waist) lastWaist = measByDate[l.date].waist;
+                }
+                const win = calculateWindows(appState.logs.indexOf(l));
+                const fHrs = l.fastingHours !== null && l.fastingHours !== undefined
+                    ? Number(l.fastingHours)
+                    : (win.fastingHours ? parseFloat(win.fastingHours) : 16.0);
+
+                const shortMonthDay = l.displayDate.split(', ')[1] || l.sheetDate;
+                return {
+                    label: shortMonthDay,
+                    weight: lastWeight,
+                    waist: lastWaist,
+                    fasting: fHrs
+                };
+            });
+        }
+
+        async function loadFromGoogleSheet() {
+            if (!appState.scriptUrl) {
+                setSyncIndicator('ok', 'Demo Mode · Connect Script');
+                return;
+            }
+
+            setSyncIndicator('syncing', 'Syncing with Sheet...');
+            try {
+                const res = await fetch(`${appState.scriptUrl}?action=loadAll`);
+                const data = await res.json();
+
+                if (data.status !== 'ok') {
+                    throw new Error(data.message || 'Failed to load Sheet');
+                }
+
+                if (Array.isArray(data.logs) && data.logs.length > 0) {
+                    appState.logs = data.logs;
+                    const todayIso = new Date().toLocaleDateString('en-CA');
+                    const todayIdx = appState.logs.findIndex(l => l.date === todayIso);
+                    if (todayIdx !== -1) {
+                        appState.currentLogIndex = todayIdx;
+                    } else {
+                        let lastPopulated = 0;
+                        appState.logs.forEach((l, i) => {
+                            if (l.firstBite || l.waterOz > 0 || l.meals || l.notes) lastPopulated = i;
+                        });
+                        appState.currentLogIndex = lastPopulated;
+                    }
+                }
+
+                if (Array.isArray(data.measurements) && data.measurements.length > 0) {
+                    appState.measurements = data.measurements;
+                    appState.currentMeasIndex = appState.measurements.length - 1;
+                }
+
+                if (Array.isArray(data.insights) && data.insights.length > 0) {
+                    appState.aiInsightsSets = [data.insights];
+                    appState.aiInsightIndex = 0;
+                }
+
+                rebuildTrendSeriesFromLogs();
+                persistLocally();
+                renderLogTab();
+                renderMeasurementsTab();
+                if (appState.activeTab === 'insights') renderInsightsTab();
+
+                setSyncIndicator('ok', 'Synced · Google Sheet');
+            } catch (err) {
+                console.warn('Sheet sync error, using cached data:', err);
+                setSyncIndicator('error', 'Offline · Using Cached Data');
+            }
+        }
+
+        function markDirty() {
+            isDirty = true;
+            const fab = document.getElementById('save-fab');
+            const fabText = document.getElementById('fab-text');
+            fab.classList.remove('bg-sage-600');
+            fab.classList.add('bg-terracotta-500', 'fab-dirty');
+            fabText.textContent = 'Lock In Edits';
+        }
+
+        async function commitSaveToSheet() {
+            const fab = document.getElementById('save-fab');
+            const fabText = document.getElementById('fab-text');
+
+            fabText.textContent = 'Syncing...';
+            persistLocally();
+
+            if (appState.scriptUrl) {
+                setSyncIndicator('syncing', 'Saving to Sheet...');
+                try {
+                    const payload = {
+                        tab: appState.activeTab === 'measurements' ? 'Measurements' : 'Log',
+                        data: appState.activeTab === 'measurements'
+                            ? appState.measurements[appState.currentMeasIndex]
+                            : appState.logs[appState.currentLogIndex]
+                    };
+                    const res = await fetch(appState.scriptUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await res.json();
+                    if (result.status !== 'ok') {
+                        throw new Error(result.message || 'Save failed');
+                    }
+                    rebuildTrendSeriesFromLogs();
+                    setSyncIndicator('ok', 'Synced · Google Sheet');
+                } catch (err) {
+                    console.warn('Apps Script sync error:', err);
+                    setSyncIndicator('error', 'Saved Locally · Sync Retry Needed');
+                    fabText.textContent = 'Retry Sync';
+                    showToast('Saved locally (Check Apps Script URL)');
+                    return;
+                }
+            }
+
+            isDirty = false;
+            fab.classList.remove('bg-terracotta-500', 'fab-dirty');
+            fab.classList.add('bg-sage-600');
+            fabText.textContent = 'Locked In';
+            showToast(appState.scriptUrl ? 'Synced to Michelle Fasting Sheet!' : 'Locked in (Demo Mode · Paste Script URL in ⚙️)');
+        }
+
+        function openSettingsModal() {
+            document.getElementById('input-script-url').value = appState.scriptUrl || '';
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function openInstallHelp() {
+            document.getElementById('install-modal').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function saveEndpointConfig() {
+            appState.scriptUrl = document.getElementById('input-script-url').value.trim();
+            persistLocally();
+            closeModal('settings-modal');
+            showToast('Sync endpoint saved');
+            loadFromGoogleSheet();
+        }
+
+        let toastTimer = null;
+        function showToast(msg) {
+            const banner = document.getElementById('toast-banner');
+            document.getElementById('toast-text').textContent = msg;
+            banner.classList.remove('opacity-0', 'translate-y-[-8px]');
+            banner.classList.add('opacity-100', 'translate-y-0');
+
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                banner.classList.add('opacity-0', 'translate-y-[-8px]');
+                banner.classList.remove('opacity-100', 'translate-y-0');
+            }, 2600);
+        }
+
+        window.onload = function () {
+            renderLogTab();
+            renderMeasurementsTab();
+            switchTab(appState.activeTab || 'log');
+            loadFromGoogleSheet();
+        };
+    </script>
+</body>
+</html>
